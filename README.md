@@ -1,298 +1,163 @@
-<div align='center'>
-  <h1 style="margin-top: 15px;">「电商问数」智能数据分析 Agent</h1>
-  <h4><b>shopkeeper-agent</b></h4>
-  <p><em>可能是全网最适合用于系统学习 LangGraph 的智能问数实战项目，配套系统性文字教程与对应章节分支，带你打通混合检索、多阶段推理、SQL 生成与执行全链路</em></p>
-</div>
+# NL2SQL｜安全增强型电商问数 Agent
 
-<div align='center'>
+> 面向电商数仓的自然语言问数系统：把业务问题转换为可控、可审计、可流式返回的 SQL 查询。
 
-![AI](https://img.shields.io/badge/AI-Agent-00c853?style=flat)
+本仓库是在上游电商问数项目基础上的独立安全增强实现。项目保留“元数据检索 + LangGraph 编排 + SQL 生成”的主链路，并将认证、数据权限、租户隔离、SQL 安全和结果脱敏纳入查询闭环。
+
+![AI Agent](https://img.shields.io/badge/AI-Agent-00c853?style=flat)
 ![Python](https://img.shields.io/badge/Python-3.14-3776AB.svg?logo=python&logoColor=white)
-![LangGraph](https://img.shields.io/badge/LangGraph-Agentic%20Workflow-1C3C3C.svg)
-![Stars](https://img.shields.io/github/stars/didilili/shopkeeper-agent?logo=github&style=flat)
-[![Read Online](https://img.shields.io/badge/在线教程-点击访问-blue?logo=bookstack)](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/0-%E5%89%8D%E8%A8%80)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-009688.svg?logo=fastapi&logoColor=white)
+![LangGraph](https://img.shields.io/badge/LangGraph-Workflow-1C3C3C.svg)
 
-</div>
+## 项目定位
 
-**📢 说明**：本套实战项目已更新完成，配套教程、章节分支和前后端代码均可对照学习。
+系统服务于电商运营、销售和数据分析场景。用户只需输入自然语言问题，例如“统计华北地区本月销售额”，Agent 会检索相关元数据，生成 SQL，经过安全校验和数据库校验后执行，并通过 SSE 返回进度与结果。
 
-如果你正在找一个适合学习 `LangGraph`、`Qdrant`、`MySQL`、`FastAPI` 和 AI Agent 工程开发的实战项目，「电商问数」很可能是最适合你的项目。
+核心目标不是让模型直接执行 SQL，而是让模型生成的 SQL 必须经过确定性安全层和权限策略约束。
 
-它不是只调用一次大模型接口，也不是写几个 Prompt 演示 SQL 生成结果。这个项目围绕电商数仓问数场景，先构建元数据知识库，再做字段、指标、字段取值的混合检索，随后用 LangGraph 编排多阶段问数流程，完成 SQL 生成、校验、修正、执行和前端流式展示。换句话说，你学到的不是某一个框架 API，而是一条 AI 应用从数据准备、检索增强、智能体编排、接口交付到前端联调的完整项目主线。
-
-> 本套仓库是 [ai-agents-from-zero](https://github.com/didilili/ai-agents-from-zero) 教程体系中的 [实战项目-电商问数](https://github.com/didilili/ai-agents-from-zero/tree/main/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0) 配套源码仓库，除了可直接运行和二次开发的项目代码之外，也提供了与教程章节对应的 Git 分支演进过程，以及完整的在线图文讲义入口。
-> 如果你想系统学习「AI智能体 大模型应用开发」，也可直接从系统教程 [AI 智能体实战速成指南-大模型入门](https://didilili.github.io/ai-agents-from-zero/#/) 开始。
-
-![电商问数前端首页：样例问题、自然语言输入和智能数据分析 Agent 界面](docs/images/shopkeeper-agent-home.jpg)
-
-## 📖 项目介绍
-
-在真实问数场景里，业务同学通常不会写 SQL，数据分析同学也很难随时记住所有表结构、字段含义、指标口径和字段取值。单纯把自然语言问题直接交给大模型，很容易出现表选错、字段选错、指标理解错和 SQL 幻觉等问题。
-
-`电商问数` 要解决的就是这个问题：
-
-- 用户用自然语言提问
-- 系统自动召回相关字段、指标和字段取值
-- 大模型基于上下文进行分步推理
-- 生成 SQL 并查询数据仓库
-- 以流式方式返回分析结果
-
-## ✨ 项目亮点
-
-- **检索 + 推理 + 生成，而不是模型直出 SQL**
-    - 先围绕问题召回相关字段、指标和值域，再组织上下文生成 SQL，整体链路更稳、更可控。
-- **面向企业问数场景的混合检索**
-    - `Qdrant` 负责字段和指标的语义召回。
-    - `Elasticsearch` 负责字段取值的全文检索。
-    - `MySQL` 负责保存完整、权威的结构化元数据。
-- **支持字段、指标、取值三类信息协同召回**
-    - 比单纯做表级或字段级检索更贴近真实企业分析流程。
-- **从检索到执行的完整可运行链路**
-    - 不停留在 Prompt 设计，而是会真实生成 SQL、执行查询，并以流式方式返回结果。
-- **工程化后端结构清晰**
-    - 基于 `FastAPI + LangGraph + Repository + Client Manager` 组织配置、客户端、仓储层、服务层与智能体流程，便于维护和扩展。
-- **不仅有实战代码，还有完整配套教程文档**
-    - 项目配有一套系统化、持续更新、完全免费的教程讲义，适合按章节从数仓基础、元数据知识库到问数智能体流程逐步学习。
-- **兼顾学习价值与可扩展性**
-    - 既可以按教程章节逐步理解，也可以在此基础上继续扩展权限控制、SQL 审核、结果可视化等能力。
-
-这套课程十分适合这些场景：
-
-- 想系统学习 `LangGraph`，但不想只停留在几个玩具节点。
-- 想把 `MySQL`、`Qdrant`、`Elasticsearch` 和大模型放到同一个业务场景里理解。
-- 想做一个比简单模型调用更接近实际开发的 AI Agent 项目。
-- 想把项目写进简历，并且能说清楚数据层、检索层、智能体层、服务层和前端层分别做了什么。
-
-## 🏗️ 系统架构
-
-![电商问数系统架构图：前端通过 FastAPI 和 SSE 连接后端，LangGraph 问数智能体基于 Jieba、MySQL、Qdrant、Elasticsearch 和 LLM 完成召回、SQL 生成校验执行与结果返回](docs/images/shopkeeper-agent-system-architecture.svg)
-
-项目围绕两条主线展开：
-
-| 主线             | 做什么                                                                   | 涉及模块                                     |
-| ---------------- | ------------------------------------------------------------------------ | -------------------------------------------- |
-| 元数据知识库构建 | 抽取教学数仓中的表、字段、指标和字段取值，写入结构化库、向量库和全文索引 | `MySQL` / `Qdrant` / `Elasticsearch` / `TEI` |
-| 自然语言问数     | 基于用户问题完成召回、上下文整理、SQL 生成校验执行，并把过程流式返回前端 | `LangGraph` / `FastAPI` / `SSE` / `React`    |
-
-![电商问数查询结果页：LangGraph 执行流程、SQL 校验执行和查询结果表格](docs/images/shopkeeper-agent-query-result.jpg)
-
-## 🛠️ 项目技术栈
-
-| 模块       | 技术                              | 作用                                           |
-| ---------- | --------------------------------- | ---------------------------------------------- |
-| 教学数仓   | `MySQL`                           | 模拟事实表、维度表和分析型查询环境             |
-| 元数据库   | `MySQL` / `SQLAlchemy`            | 保存表、字段、指标、字段指标关系等结构化元数据 |
-| 向量检索   | `Qdrant`                          | 保存字段和指标向量，支持语义召回               |
-| 全文检索   | `Elasticsearch`                   | 保存字段真实取值，支持关键词和值域检索         |
-| Embedding  | `TEI` / `BAAI/bge-large-zh-v1.5`  | 将字段、指标、问题等文本转成向量               |
-| 智能体编排 | `LangGraph`                       | 组织多阶段问数工作流                           |
-| 模型接入   | `LangChain`                       | 封装 LLM 与 Embedding 调用                     |
-| 后端接口   | `FastAPI`                         | 提供问数 API、依赖注入和生命周期管理           |
-| 流式协议   | `SSE`                             | 实时返回节点进度、查询结果和错误消息           |
-| 前端       | `React` / `Vite` / `Tailwind CSS` | 提供聊天式问数界面和流程展示                   |
-| 日志追踪   | `ContextVar` / `loguru`           | 为并发请求注入 request_id，便于排查链路        |
-| 依赖管理   | `uv` / `pnpm`                     | 管理 Python 后端和前端依赖                     |
-
-## 📁 项目结构
+## 核心设计
 
 ```text
-shopkeeper-agent/
-├── app/
-│   ├── agent/            # LangGraph 图、状态、上下文和各类节点
-│   ├── api/              # FastAPI 路由、依赖注入、生命周期和请求结构
-│   ├── clients/          # MySQL、Qdrant、Elasticsearch、Embedding 客户端管理
-│   ├── conf/             # 配置 dataclass 与配置加载工具
-│   ├── core/             # 日志、request_id 上下文等通用能力
-│   ├── entities/         # 更贴近业务语义的数据对象
-│   ├── models/           # SQLAlchemy ORM 模型
-│   ├── prompt/           # Prompt 加载工具
-│   ├── repositories/     # MySQL、Qdrant、Elasticsearch 数据访问层
-│   ├── scripts/          # 元数据知识库构建脚本
-│   └── services/         # 元数据构建服务和问数查询服务
-├── conf/                 # app_config.yaml、meta_config.yaml
-├── docker/               # Docker Compose、MySQL 初始化 SQL、ES 插件、Embedding 挂载目录
-├── frontend/             # React + Vite + Tailwind CSS 前端项目
-├── prompts/              # SQL 生成、修正、过滤等 Prompt 模板
-├── main.py               # FastAPI 应用入口
-└── pyproject.toml        # Python 项目依赖与工具配置
+自然语言问题
+      ↓
+关键词抽取 → 字段 / 指标 / 字段值三路召回
+      ↓
+结果合并 → 表与指标过滤 → 上下文补全 → SQL 生成
+      ↓
+JWT 认证 → 数据权限与租户策略
+      ↓
+SQLGuard(AST 白名单、只读、单语句、LIMIT、租户条件)
+      ↓
+EXPLAIN 校验 ──失败→ 有限次数修正 → 再次 SQL 安全校验
+      ↓
+只读数仓执行(超时/行数限制) → 敏感字段脱敏 → SSE 返回
 ```
 
-## 🚀 快速开始
+### 1. 混合元数据检索
 
-当前仓库已经包含一套可直接启动的本地开发环境，你可以按照以下顺序启动项目。
+- MySQL 保存权威的表、字段、指标和数据库信息。
+- Qdrant 负责字段和指标的语义召回。
+- Elasticsearch 负责字段取值的全文检索。
+- LangGraph 将抽取、召回、过滤、上下文补全、生成和执行拆成可观测节点。
 
-### 1. 准备环境
+### 2. SQL 安全执行闭环
 
-- Python `>= 3.14`
-- `uv`
-- Docker 与 Docker Compose
-- Node.js 与 `pnpm`
+- 数据库运行账号使用 `shopkeeper_ro`，只授予 `dw.*` 的 `SELECT` 和 `SHOW VIEW` 权限。
+- 使用 `sqlglot` 解析 MySQL AST，只允许单条 `SELECT`。
+- 拒绝 DDL、DML、多语句、`SELECT INTO` 和危险函数。
+- 表名、字段名按白名单校验；系统自动注入当前租户的行级过滤条件。
+- 固定查询超时和最大结果行数，避免慢查询和大结果集拖垮服务。
+- SQL 经数据库 `EXPLAIN` 校验失败时，仅允许配置的最大次数重试修正；修正后的 SQL 必须重新经过安全层。
+- 返回结果统一执行敏感字段脱敏；具备 `pii:read` scope 的用户才可按策略读取明文。
 
-### 2. 克隆项目
+### 3. 认证与数据权限
 
-```bash
-git clone https://github.com/didilili/shopkeeper-agent.git
-cd shopkeeper-agent
-```
+请求必须携带 Bearer JWT。Token 至少包含 `sub`、`tenant_id` 和 `scopes`，服务端根据租户和 scope 构建请求级安全上下文，不信任客户端提交的租户或权限参数。
 
-### 3. 安装后端依赖
+默认安全策略位于 [`conf/app_config.yaml`](conf/app_config.yaml)，包括允许访问的表/字段、租户过滤条件、脱敏策略、超时、最大行数和最大重试次数。
 
-```bash
-uv sync
-```
+## 主要 API
 
-### 4. 配置大模型 API Key
+### `POST /api/query`
 
-```bash
-cp .env.example .env
-```
+请求体：
 
-把 `.env` 中的 `LLM_API_KEY` 替换成真实密钥：
-
-```bash
-LLM_API_KEY=your_real_api_key
-```
-
-默认配置使用兼容 OpenAI 接口的硅基流动服务：
-
-```yaml
-llm:
-    model_name: Pro/zai-org/GLM-5.1
-    api_key: ${oc.env:LLM_API_KEY}
-    base_url: https://api.siliconflow.cn/v1
-```
-
-如需使用其他兼容 OpenAI API 的模型平台，修改 [conf/app_config.yaml](conf/app_config.yaml) 中的 `model_name` 和 `base_url`。
-
-### 5. 准备 Embedding 模型
-
-项目通过 `TEI` 加载 `BAAI/bge-large-zh-v1.5`。模型文件体积较大，无法再仓库中进行提交，需要先下载到 Docker 挂载目录：
-
-```bash
-uv run hf download BAAI/bge-large-zh-v1.5 --local-dir docker/embedding/bge-large-zh-v1.5
-```
-
-如果手动下载，请解压到：`docker/embedding/bge-large-zh-v1.5`路径下。
-
-### 6. 启动 Docker 基础服务
-
-```bash
-docker compose --env-file .env -f docker/docker-compose.yaml up -d
-```
-
-默认端口：
-
-| 服务          | 端口   |
-| ------------- | ------ |
-| MySQL         | `3306` |
-| Elasticsearch | `9200` |
-| Kibana        | `5601` |
-| Qdrant        | `6333` |
-| Embedding     | `8081` |
-
-> `docker/mysql/meta.sql` 和 `docker/mysql/dw.sql` 会在 MySQL 容器首次启动时自动初始化元数据库和教学数仓。
-
-### 7. 构建元数据知识库
-
-```bash
-uv run python -m app.scripts.build_meta_knowledge -c conf/meta_config.yaml
-```
-
-这一步会把表字段元数据写入 MySQL，把字段和指标向量写入 Qdrant，并把字段真实取值写入 Elasticsearch。
-
-### 8. 启动后端
-
-```bash
-uv run fastapi dev main.py
-```
-
-后端接口：
-
-```text
-POST http://127.0.0.1:8000/api/query
+```json
+{"query": "统计华北地区本月销售额"}
 ```
 
 请求示例：
 
-```json
-{
-    "query": "统计华北地区的销售总额"
-}
+```bash
+curl -N http://localhost:8000/api/query \
+  -H "Authorization: Bearer <JWT_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"统计华北地区本月销售额"}'
 ```
 
-SSE 消息类型：
+响应为 `text/event-stream`，事件示例：
 
-| 类型       | 含义         |
-| ---------- | ------------ |
-| `progress` | 节点执行进度 |
-| `result`   | 最终查询结果 |
-| `error`    | 全局异常消息 |
+```text
+data: {"type":"progress","step":"SQL安全校验","status":"success"}
 
-### 9. 启动前端
+data: {"type":"result","data":[...]}
+
+data: {"type":"error","code":"table_forbidden","message":"查询未通过安全校验"}
+```
+
+危险 SQL 不会进入数据库。例如模型生成 `DROP TABLE fact_order`、`DELETE FROM fact_order`、多条 SQL 或访问未授权表时，`SQLGuard` 会直接拒绝并返回 SSE 错误事件；数据库不会收到该语句。若只是 SQL 语法错误，则会进入有限次“修正 → 安全校验 → EXPLAIN”闭环，超过次数后终止执行。
+
+## 目录结构
+
+```text
+app/
+├── agent/                 # LangGraph 状态、上下文和工作流节点
+├── api/                   # FastAPI 路由、依赖和请求模型
+├── clients/               # MySQL、Qdrant、Elasticsearch 等客户端
+├── repositories/          # 元数据、数仓和检索仓储
+├── services/              # 查询服务和元数据知识库服务
+└── security/              # JWT、策略、AST SQLGuard、结果脱敏
+conf/                      # 应用配置和安全白名单
+docker/mysql/              # 元数据、数仓及只读权限初始化脚本
+tests/                     # 安全层和 Agent 流程测试
+```
+
+## 快速开始
+
+### 环境要求
+
+- Python 3.14+
+- Docker Compose
+- 可用的 LLM API Key
+- 本地运行 MySQL、Qdrant、Elasticsearch 和 Embedding 服务
+
+### 安装依赖
 
 ```bash
-cd frontend
-pnpm install
-pnpm dev
+uv sync --dev
+Copy-Item .env.example .env
 ```
 
-前端默认通过 Vite 代理把 `/api` 转发到 `http://127.0.0.1:8000`。如需修改：
+修改 `.env` 中的 LLM、JWT 和数据库密码；不要把真实密钥提交到 Git。首次部署前请替换 `docker/mysql/permissions.sql` 和示例配置中的占位密码，并确保应用只使用只读数仓账号执行查询。
+
+### 启动基础设施
 
 ```bash
-cd frontend
-cp .env.example .env
+docker compose -f docker/docker-compose.yaml up -d
 ```
+
+初始化元数据知识库后启动 API：
 
 ```bash
-VITE_DEV_PROXY_TARGET=http://127.0.0.1:8000
+uv run python -m app.scripts.build_meta_knowledge
+uv run uvicorn app.main:app --reload
 ```
 
-## 📚 配套教程目录
-
-教程总入口：[电商问数完整教程](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/0-%E5%89%8D%E8%A8%80)
-
-| 章节 | 标题                                                                                                                                                                                                                                                                              | 学习重点                                                                 | 对应分支                           |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------- |
-| 0    | [前言](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/0-%E5%89%8D%E8%A8%80)                                                                                                                           | 项目定位、学习价值与能力边界                                             | `-`                                |
-| 1    | [项目概述与数仓基础](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/1-%E9%A1%B9%E7%9B%AE%E6%A6%82%E8%BF%B0%E4%B8%8E%E6%95%B0%E4%BB%93%E5%9F%BA%E7%A1%80)                                              | 业务库、数仓、事实表、维度表与教学数仓设计                               | `-`                                |
-| 2    | [项目整体架构与智能体流程](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/2-%E9%A1%B9%E7%9B%AE%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84%E4%B8%8E%E6%99%BA%E8%83%BD%E4%BD%93%E6%B5%81%E7%A8%8B)             | MySQL、Qdrant、Elasticsearch、LLM 与 Agent 工作流如何协作                | `-`                                |
-| 3    | [开发环境与基础服务准备](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/3-%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E4%B8%8E%E5%9F%BA%E7%A1%80%E6%9C%8D%E5%8A%A1%E5%87%86%E5%A4%87)                        | uv、Docker Compose、MySQL、Qdrant、Elasticsearch、Kibana、Embedding 服务 | `03-env-services`                  |
-| 4    | [项目结构与基础服务配置管理](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/4-%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E5%9F%BA%E7%A1%80%E6%9C%8D%E5%8A%A1%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86)  | 工程结构、YAML 配置、OmegaConf 与 dataclass 配置加载                     | `04-structure-config`              |
-| 5    | [Qdrant 与 ES 快速入门与接入](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/5-Qdrant%E4%B8%8EES%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8%E4%B8%8E%E6%8E%A5%E5%85%A5)                                      | 向量检索、全文检索与客户端管理                                           | `05-qdrant-es`                     |
-| 6    | [MySQL、Embedding 接入与日志管理](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/6-MySQL%E3%80%81Embedding%E4%B8%8E%E6%97%A5%E5%BF%97%E7%AE%A1%E7%90%86)                                              | 异步 MySQL、TEI Embedding、loguru 日志                                   | `06-mysql-embedding-log`           |
-| 7    | [元数据知识库总览与构建入口](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/7-%E5%85%83%E6%95%B0%E6%8D%AE%E7%9F%A5%E8%AF%86%E5%BA%93%E6%80%BB%E8%A7%88%E4%B8%8E%E6%9E%84%E5%BB%BA%E5%85%A5%E5%8F%A3)  | 元数据知识库产物、存储分工和构建入口                                     | `07-metadata-base-overview`        |
-| 8    | [表与字段信息同步到元数据库](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/8-%E8%A1%A8%E4%B8%8E%E5%AD%97%E6%AE%B5%E4%BF%A1%E6%81%AF%E5%90%8C%E6%AD%A5%E5%88%B0%E5%85%83%E6%95%B0%E6%8D%AE%E5%BA%93)  | Service、Repository、Mapper、ORM 如何配合入库                            | `08-metadata-table-column-sync`    |
-| 9    | [字段与指标检索能力构建](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/9-%E5%AD%97%E6%AE%B5%E4%B8%8E%E6%8C%87%E6%A0%87%E6%A3%80%E7%B4%A2%E8%83%BD%E5%8A%9B%E6%9E%84%E5%BB%BA)                        | 字段向量索引、字段值全文索引和指标向量索引                               | `09-metadata-retrieval-capability` |
-| 10   | [问数智能体总览与工作流骨架](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/10-%E9%97%AE%E6%95%B0%E6%99%BA%E8%83%BD%E4%BD%93%E6%80%BB%E8%A7%88%E4%B8%8E%E5%B7%A5%E4%BD%9C%E6%B5%81%E9%AA%A8%E6%9E%B6) | LangGraph 工作流骨架与节点设计                                           | `10-agent-workflow-skeleton`       |
-| 11   | [关键词抽取与多路召回](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/11-%E5%85%B3%E9%94%AE%E8%AF%8D%E6%8A%BD%E5%8F%96%E4%B8%8E%E5%A4%9A%E8%B7%AF%E5%8F%AC%E5%9B%9E)                                  | 关键词抽取，字段、指标和字段取值并行召回                                 | `11-agent-keyword-multi-recall`    |
-| 12   | [召回信息合并与上下文构建](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/12-%E5%8F%AC%E5%9B%9E%E4%BF%A1%E6%81%AF%E5%90%88%E5%B9%B6%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87%E6%9E%84%E5%BB%BA)            | 召回结果合并、依赖字段补齐和值域上下文构建                               | `12-agent-merge-retrievals`        |
-| 13   | [SQL 生成前的信息过滤与补全](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/13-SQL%E7%94%9F%E6%88%90%E5%89%8D%E7%9A%84%E4%BF%A1%E6%81%AF%E8%BF%87%E6%BB%A4%E4%B8%8E%E8%A1%A5%E5%85%A8)                | 候选表字段过滤、指标过滤、日期和数据库上下文补齐                         | `13-agent-filter-extra-context`    |
-| 14   | [SQL 生成与执行闭环](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/14-SQL%E7%94%9F%E6%88%90%E4%B8%8E%E6%89%A7%E8%A1%8C%E9%97%AD%E7%8E%AF)                                                            | SQL 生成、EXPLAIN 校验、错误修正和最终执行                               | `14-agent-sql-loop`                |
-| 15   | [API 接口基础与 FastAPI 入门](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/15-API%E6%8E%A5%E5%8F%A3%E5%9F%BA%E7%A1%80%E4%B8%8EFastAPI%E5%85%A5%E9%97%A8)                                            | `/api/query`、StreamingResponse 和 SSE 基础                              | `15-api-streaming-basics`          |
-| 16   | [查询接口实现与依赖组装](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/16-%E6%9F%A5%E8%AF%A2%E6%8E%A5%E5%8F%A3%E5%AE%9E%E7%8E%B0%E4%B8%8E%E4%BE%9D%E8%B5%96%E7%BB%84%E8%A3%85)                       | QueryService、依赖注入和应用生命周期资源管理                             | `16-api-query-service`             |
-| 17   | [前后端联调与日志追踪](https://didilili.github.io/ai-agents-from-zero/#/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0/17-%E5%89%8D%E5%90%8E%E7%AB%AF%E8%81%94%E8%B0%83%E4%B8%8E%E6%97%A5%E5%BF%97%E8%BF%BD%E8%B8%AA)                                  | SSE 消息协议、前端展示、异常兜底和 request_id 日志追踪                   | `17-api-integration-logging`       |
-
-可以用分支切换对照每一阶段的代码演进：
+### 测试与检查
 
 ```bash
-git checkout 04-structure-config
-git checkout main
+uv run python -m pytest -q
+uv run ruff check app tests
 ```
 
-`main` 分支保留当前完整闭环版本。
+## 当前实现边界
 
-> 本项目基于尚硅谷「大模型智能体掌柜问数」项目，并在此基础上整理完善。
+当前版本已经覆盖查询入口所需的基础认证、数据权限、租户隔离、SQL 安全和脱敏能力，但仍建议在生产环境继续补充：
 
-## 🚧 能力边界
+- 接入企业级 IdP、密钥轮换和 Token 吊销机制。
+- 将静态白名单和租户策略迁移到统一策略中心。
+- 增加 SQL 审计日志、调用链追踪、限流、缓存和自动化评测。
+- 对多租户数据库、视图权限和不同 SQL 方言做专项验证。
 
-这套项目主要关注智能问数的学习流程，不刻意覆盖生产治理能力，例如：
+## 上游参考与致谢
 
-- 用户登录、角色权限和数据权限控制
-- 多租户隔离
-- SQL 安全审计和执行白名单
-- 查询缓存、限流和性能治理
-- 系统化评测集与自动化回归评测
-- 监控告警、链路追踪平台和灰度发布
-- 更复杂的多轮问数记忆、追问改写和会话管理
+本项目的基础问数流程参考了：
 
-这些能力适合在基础流程跑通之后继续扩展。`shopkeeper-agent` 更适合承担一个清晰角色：先把智能问数最关键、最必要、最值得学习的工程链路讲清楚、跑起来，并为后续扩展企业级能力打基础。
+- [didilili/shopkeeper-agent](https://github.com/didilili/shopkeeper-agent)
+- [ai-agents-from-zero](https://github.com/didilili/ai-agents-from-zero) 教程中的[电商问数实战项目](https://github.com/didilili/ai-agents-from-zero/tree/main/%E5%AE%9E%E6%88%98%E9%A1%B9%E7%9B%AE-%E7%94%B5%E5%95%86%E9%97%AE%E6%95%B0)
+
+上游项目重点展示 LangGraph、多路召回、SQL 生成和 FastAPI 流式接口；本仓库在此基础上围绕安全执行和企业数据隔离进行了独立设计与实现。感谢上游项目及其教程作者提供的学习基础。
+
+## License
+
+请遵循上游项目及依赖组件的许可证要求；本仓库主要用于学习、研究和工程实践。
