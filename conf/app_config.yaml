@@ -1,0 +1,100 @@
+logging:
+  file:
+    enable: true
+    level: INFO
+    path: logs
+    rotation: "10 MB"
+    retention: "7 days"
+  console:
+    enable: true
+    level: INFO
+
+db_meta:
+  host: 127.0.0.1
+  port: 3307
+  user: ${oc.env:META_DB_USER,shopkeeper_meta}
+  password: ${oc.env:META_DB_PASSWORD,change-me-initial-password}
+  database: meta
+
+db_dw:
+  host: 127.0.0.1
+  port: 3307
+  user: ${oc.env:DW_DB_USER,shopkeeper_ro}
+  password: ${oc.env:DW_DB_PASSWORD,change-me-initial-password}
+  database: dw
+
+qdrant:
+  host: localhost
+  port: 6333
+  embedding_size: 1024
+
+embedding:
+  host: localhost
+  port: 8081
+  model: BAAI/bge-large-zh-v1.5
+
+es:
+  host: localhost
+  port: 9200
+  index_name: data_agent
+
+llm:
+  model_name: deepseek-v4-flash
+  api_key: ${oc.env:LLM_API_KEY}
+  base_url: https://api.deepseek.com
+
+security:
+  jwt_secret: ${oc.env:JWT_SECRET,dev-only-change-me-please-rotate-32}
+  jwt_algorithm: HS256
+  max_sql_retries: 2
+  query_timeout_ms: 5000
+  max_result_rows: 500
+  allowed_tables:
+    - fact_order
+    - dim_region
+    - dim_customer
+    - dim_product
+    - dim_date
+  allowed_columns:
+    fact_order:
+      - order_id
+      - customer_id
+      - product_id
+      - date_id
+      - region_id
+      - order_quantity
+      - order_amount
+    dim_region:
+      - region_id
+      - province
+      - region_name
+      - country
+    dim_customer:
+      - customer_id
+      - customer_name
+      - gender
+      - member_level
+    dim_product:
+      - product_id
+      - product_name
+      - category
+      - brand
+    dim_date:
+      - date_id
+      - year
+      - quarter
+      - month
+      - day
+  tenant_filters:
+    tenant-001:
+      fact_order:
+        region_id:
+          - R001
+          - R004
+      dim_region:
+        region_id:
+          - R001
+          - R004
+  masked_columns:
+    customer_name: partial
+    customer_id: hash
