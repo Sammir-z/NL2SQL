@@ -9,9 +9,10 @@
 - [一、测试体系与分层架构](#一测试体系与分层架构)
 - [二、自动化单元与安全层测试（离线即跑）](#二自动化单元与安全层测试离线即跑)
 - [三、端到端真实业务评测（100 条全覆盖评测集）](#三端到端真实业务评测100-条全覆盖评测集)
-- [四、测试与评测日志持久化规范](#四测试与评测日志持久化规范)
-- [五、手动接口调试与安全防御验证](#五手动接口调试与安全防御验证)
-- [六、Bad Case 分类、归因排查与回归闭环](#六bad-case-分类归因排查与回归闭环)
+- [四、RAG 召回与拒答能力专项评测（80 条 Bad Case）](#四rag-召回与拒答能力专项评测80-条-bad-case)
+- [五、测试与评测日志持久化规范](#五测试与评测日志持久化规范)
+- [六、手动接口调试与安全防御验证](#六手动接口调试与安全防御验证)
+- [七、Bad Case 分类、归因排查与回归闭环](#七bad-case-分类归因排查与回归闭环)
 
 ---
 
@@ -114,7 +115,53 @@ uv run pytest -q
 
 ---
 
-## 四、测试与评测日志持久化规范
+## 四、RAG 召回与拒答能力专项评测（80 条 Bad Case）
+
+针对 RAG 检索层（jieba分词 $\rightarrow$ LLM扩词 $\rightarrow$ Qdrant向量 + ES全文）及下游大模型过滤判定，项目提供专门的离线评测驱动与 80 条精细化 Bad Case 数据集。详细设计方案参见 [`docs/RAG_test/RAG_RETRIEVAL_TEST_DESIGN.md`](docs/RAG_test/RAG_RETRIEVAL_TEST_DESIGN.md)。
+
+### 1. 核心评测机制与指标
+
+* **双重评测粒度**：
+  * **粒度 A（Raw Top-5）**：评测原始检索算法能力，包含 `Recall@5`、`Precision@5`、`MRR`、`HitRate@5`；
+  * **粒度 B（Merged & Filtered）**：评测经主外键补齐与 Filter 大模型判定后的最终 Schema 完备性与拒答判定。
+* **拒答能力指标（针对 18 条越界/虚构业务用例与 8 条注入攻击）**：
+  * **正向拒答率（TRR）**：大模型成功识别无相关数据输出空集并触发拒答的比例（目标 $\ge 95\%$）；
+  * **合法误拒率（FRR）**：正常业务提问被错误过滤清空的比例（目标 $\le 2\%$）。
+
+### 2. 运行评测命令
+
+* **离线/模拟模式快速自检（无需启动外部数据库）**：
+  ```bash
+  uv run python evaluation/run_rag_eval.py --mock
+  ```
+* **执行全量 80 条 RAG 真实离线评测**：
+  ```bash
+  uv run python evaluation/run_rag_eval.py
+  ```
+* **指定单项分类评测（如仅测越界拒答 C4）**：
+  ```bash
+  uv run python evaluation/run_rag_eval.py --category C4_out_of_domain
+  ```
+
+### 3. 80 条 Bad Case 分类与考察功能
+
+测试集位于 [`docs/RAG_test/rag_eval_cases.json`](docs/RAG_test/rag_eval_cases.json)：
+
+| 类别编码 | 类别名称 | 数量 | 核心考察功能 |
+| :---: | :--- | :---: | :--- |
+| **C1** | 行业口语与同义词映射 | 12条 | 测试 LLM 提示词扩词对行业口语（“大盘流水”、“客单价”）的指标对齐能力 |
+| **C2** | 多义词与实体属性混淆 | 10条 | 测试“苹果”品牌 vs 品类、“美的”等词汇的多路并存召回与大模型消歧 |
+| **C3** | 音近字/错别字与拼写容错 | 10条 | 测试同音字（“华倍” $\rightarrow$ “华北”、“戴深” $\rightarrow$ “戴森”）及大小写模糊容错 |
+| **C4** | 越界与不存在实体探针 (拒答) | 18条 | **【核心拒答率测试】** 测试数仓无退货、无库存、无打卡等业务时的正向拒答 (TRR) |
+| **C5** | 隐式时间与口语化表达 | 10条 | 测试“刚刚过去那个季度”、“年初首月”等非标相对时间的抽取与维表映射 |
+| **C6** | 多实体复合长难句 (长依赖) | 12条 | 测试 4~5 张维表星型全关联下的防漏召能力 (Recall@5) |
+| **C7** | 对抗注入与系统表探测 | 8条 | 测试越狱探测密码或 information_schema 等敏感元数据时的绝对拦截 |
+
+评测将自动在控制台打印各分类的分面独立统计表格，并将详细日志保存至 `logs/RAG/rag_eval_results.log`，结构化报告保存至 `docs/RAG_test/rag_eval_report.json`。
+
+---
+
+## 五、测试与评测日志持久化规范
 
 为确保每次测试与评测的过程可溯源、结果可审计，所有详细结果均会自动输出到 `logs/` 目录中：
 
@@ -132,9 +179,14 @@ uv run pytest -q
 * 执行失败用例的具体错误信息（`Error detail`）；
 * 最终的统计指标（执行成功率 `execution_success`、SQL 执行准确率 `sql_execution_accuracy`、自愈触发总次数 `repair_invocations`）。
 
+### 3. RAG 召回评测日志：`logs/RAG/rag_eval_results.log`
+每次运行 `evaluation/run_rag_eval.py` 时自动输出：
+* 各分类分面评估数据（Recall@5、Precision@5、MRR、TRR、FRR）；
+* 导出的结构化 JSON 报告同步归档在 `docs/RAG_test/rag_eval_report.json`。
+
 ---
 
-## 五、手动接口调试与安全防御验证
+## 六、手动接口调试与安全防御验证
 
 除了自动化评测，也可以使用 Python 脚本或 cURL 发起单次请求：
 
@@ -162,7 +214,7 @@ print('Security Interception:', err)
 
 ---
 
-## 六、Bad Case 分类、归因排查与回归闭环
+## 七、Bad Case 分类、归因排查与回归闭环
 
 当评测出现 `FAIL` 时，按照以下四步定位与归因：
 

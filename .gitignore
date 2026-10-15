@@ -55,6 +55,7 @@ yarn-error.log
 testem.log
 /typings
 logs/*.log
+logs/**/*.log
 
 
 # System

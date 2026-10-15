@@ -156,6 +156,17 @@ uv run python evaluation/run_eval.py --dataset evaluation/questions_100.json
 ```
 > 评测日志及每个 Case 的执行判定、修复次数、错误明细会自动保存至 `logs/evaluation_results.log`。
 
+#### 3. RAG 召回与拒答专项评测（80 条精细化 Bad Case）
+针对 Schema 多路检索链路（Qdrant 向量 + ES 全文）与下游大模型过滤判定，评测双重粒度指标（Raw Top-5 召回与最终 Context 完备性）以及跨界提问的拒答能力（正向拒答率 TRR / 误拒率 FRR）。完整说明参见 [RAG 评测指南 (README_RAG_TEST.md)](README_RAG_TEST.md)。
+```bash
+# 离线模拟自检（无需启动外部数据库）
+uv run python evaluation/run_rag_eval.py --mock
+
+# 真实离线全量评测（需启动 Qdrant/ES 并初始化元数据）
+uv run python evaluation/run_rag_eval.py
+```
+> 评测日志及各分类分面统计报表保存至 `logs/RAG/rag_eval_results.log`，结构化报告保存至 `docs/RAG_test/rag_eval_report.json`。
+
 
 ## 当前实现边界
 
