@@ -133,12 +133,29 @@ uv run python -m app.scripts.build_meta_knowledge
 uv run uvicorn app.main:app --reload
 ```
 
-### 测试与检查
+### 测试与质量评估
 
+项目提供分层的质量保证体系，完整指南参见 [测试指南 (README_TEST.md)](README_TEST.md)。
+
+#### 1. 自动化单元与安全层测试（离线即跑）
+验证 AST 安全守门、多租户行级注入、敏感字段脱敏及状态机重试路由：
 ```bash
-uv run python -m pytest -q
-uv run ruff check app tests
+uv run pytest -q
+uv run ruff check app tests evaluation
 ```
+> 测试明细与耗时会自动记录至 `logs/test_pytest.log`。
+
+#### 2. 端到端 100 条基准评测（真实问数与执行准确率）
+启动基础设施并初始化知识库后，执行包含 100 个业务问题的端到端评测套件：
+```bash
+# 试跑前 3 条快速验证
+uv run python evaluation/run_eval.py --dataset evaluation/questions_100.json --limit 3
+
+# 运行 100 条全量自动化评估
+uv run python evaluation/run_eval.py --dataset evaluation/questions_100.json
+```
+> 评测日志及每个 Case 的执行判定、修复次数、错误明细会自动保存至 `logs/evaluation_results.log`。
+
 
 ## 当前实现边界
 

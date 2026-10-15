@@ -1,0 +1,142 @@
+[
+  {
+    "id": "q01",
+    "category": "aggregation_time_region",
+    "question": "统计2025年1月华北地区的销售额",
+    "order_sensitive": false,
+    "gold_sql": "SELECT SUM(f.order_amount) AS total_sales FROM fact_order f JOIN dim_date d ON f.date_id = d.date_id JOIN dim_region r ON f.region_id = r.region_id WHERE r.region_name = '华北' AND d.year = 2025 AND d.month = 1 AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004')"
+  },
+  {
+    "id": "q02",
+    "category": "count_time_region",
+    "question": "统计2025年1月华南地区的订单数量",
+    "order_sensitive": false,
+    "gold_sql": "SELECT COUNT(f.order_id) AS order_count FROM fact_order f JOIN dim_date d ON f.date_id = d.date_id JOIN dim_region r ON f.region_id = r.region_id WHERE r.region_name = '华南' AND d.year = 2025 AND d.month = 1 AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004')"
+  },
+  {
+    "id": "q03",
+    "category": "aggregation_tenant",
+    "question": "统计当前可访问区域在2025年第一季度的销售总额",
+    "order_sensitive": false,
+    "gold_sql": "SELECT SUM(f.order_amount) AS total_sales FROM fact_order f JOIN dim_date d ON f.date_id = d.date_id WHERE f.region_id IN ('R001', 'R004') AND d.year = 2025 AND d.quarter = 'Q1'"
+  },
+  {
+    "id": "q04",
+    "category": "group_by_time",
+    "question": "按月份统计2025年第一季度华北地区的订单金额",
+    "order_sensitive": true,
+    "gold_sql": "SELECT d.month AS month, SUM(f.order_amount) AS total_sales FROM fact_order f JOIN dim_date d ON f.date_id = d.date_id JOIN dim_region r ON f.region_id = r.region_id WHERE r.region_name = '华北' AND d.year = 2025 AND d.quarter = 'Q1' AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004') GROUP BY d.month ORDER BY d.month"
+  },
+  {
+    "id": "q05",
+    "category": "group_by_region",
+    "question": "按地区统计2025年第一季度的销售额",
+    "order_sensitive": false,
+    "gold_sql": "SELECT r.region_name AS region, SUM(f.order_amount) AS total_sales FROM fact_order f JOIN dim_region r ON f.region_id = r.region_id JOIN dim_date d ON f.date_id = d.date_id WHERE f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004') AND d.year = 2025 AND d.quarter = 'Q1' GROUP BY r.region_name"
+  },
+  {
+    "id": "q06",
+    "category": "top_n_product",
+    "question": "查询2025年第一季度华北地区销量最高的3个商品",
+    "order_sensitive": true,
+    "gold_sql": "SELECT p.product_name AS product, SUM(f.order_quantity) AS total_quantity FROM fact_order f JOIN dim_product p ON f.product_id = p.product_id JOIN dim_region r ON f.region_id = r.region_id JOIN dim_date d ON f.date_id = d.date_id WHERE r.region_name = '华北' AND d.year = 2025 AND d.quarter = 'Q1' AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004') GROUP BY p.product_name ORDER BY SUM(f.order_quantity) DESC LIMIT 3"
+  },
+  {
+    "id": "q07",
+    "category": "top_n_category",
+    "question": "查询2025年第一季度华南地区销售额最高的3个商品品类",
+    "order_sensitive": true,
+    "gold_sql": "SELECT p.category AS category, SUM(f.order_amount) AS total_sales FROM fact_order f JOIN dim_product p ON f.product_id = p.product_id JOIN dim_region r ON f.region_id = r.region_id JOIN dim_date d ON f.date_id = d.date_id WHERE r.region_name = '华南' AND d.year = 2025 AND d.quarter = 'Q1' AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004') GROUP BY p.category ORDER BY SUM(f.order_amount) DESC LIMIT 3"
+  },
+  {
+    "id": "q08",
+    "category": "group_by_brand",
+    "question": "统计2025年第一季度华北地区各品牌的订单金额",
+    "order_sensitive": false,
+    "gold_sql": "SELECT p.brand AS brand, SUM(f.order_amount) AS total_sales FROM fact_order f JOIN dim_product p ON f.product_id = p.product_id JOIN dim_region r ON f.region_id = r.region_id JOIN dim_date d ON f.date_id = d.date_id WHERE r.region_name = '华北' AND d.year = 2025 AND d.quarter = 'Q1' AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004') GROUP BY p.brand"
+  },
+  {
+    "id": "q09",
+    "category": "group_by_customer",
+    "question": "统计2025年第一季度华北地区不同会员等级的订单数量",
+    "order_sensitive": false,
+    "gold_sql": "SELECT c.member_level AS member_level, COUNT(f.order_id) AS order_count FROM fact_order f JOIN dim_customer c ON f.customer_id = c.customer_id JOIN dim_region r ON f.region_id = r.region_id JOIN dim_date d ON f.date_id = d.date_id WHERE r.region_name = '华北' AND d.year = 2025 AND d.quarter = 'Q1' AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004') GROUP BY c.member_level"
+  },
+  {
+    "id": "q10",
+    "category": "group_by_customer",
+    "question": "统计2025年第一季度华南地区男女客户的购买件数",
+    "order_sensitive": false,
+    "gold_sql": "SELECT c.gender AS gender, SUM(f.order_quantity) AS total_quantity FROM fact_order f JOIN dim_customer c ON f.customer_id = c.customer_id JOIN dim_region r ON f.region_id = r.region_id JOIN dim_date d ON f.date_id = d.date_id WHERE r.region_name = '华南' AND d.year = 2025 AND d.quarter = 'Q1' AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004') GROUP BY c.gender"
+  },
+  {
+    "id": "q11",
+    "category": "group_by_province_time",
+    "question": "统计北京市2025年各月份的订单数量",
+    "order_sensitive": true,
+    "gold_sql": "SELECT d.month AS month, COUNT(f.order_id) AS order_count FROM fact_order f JOIN dim_region r ON f.region_id = r.region_id JOIN dim_date d ON f.date_id = d.date_id WHERE r.province = '北京市' AND d.year = 2025 AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004') GROUP BY d.month ORDER BY d.month"
+  },
+  {
+    "id": "q12",
+    "category": "top_product_region",
+    "question": "查询2025年第一季度广东省销售额最高的商品",
+    "order_sensitive": true,
+    "gold_sql": "SELECT p.product_name AS product, SUM(f.order_amount) AS total_sales FROM fact_order f JOIN dim_product p ON f.product_id = p.product_id JOIN dim_region r ON f.region_id = r.region_id JOIN dim_date d ON f.date_id = d.date_id WHERE r.province = '广东省' AND d.year = 2025 AND d.quarter = 'Q1' AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004') GROUP BY p.product_name ORDER BY SUM(f.order_amount) DESC LIMIT 1"
+  },
+  {
+    "id": "q13",
+    "category": "average",
+    "question": "计算2025年2月华北地区的平均订单金额",
+    "order_sensitive": false,
+    "gold_sql": "SELECT AVG(f.order_amount) AS average_order_amount FROM fact_order f JOIN dim_date d ON f.date_id = d.date_id JOIN dim_region r ON f.region_id = r.region_id WHERE r.region_name = '华北' AND d.year = 2025 AND d.month = 2 AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004')"
+  },
+  {
+    "id": "q14",
+    "category": "extreme_value",
+    "question": "查询2025年3月华南地区的最大单笔订单金额",
+    "order_sensitive": false,
+    "gold_sql": "SELECT MAX(f.order_amount) AS max_order_amount FROM fact_order f JOIN dim_date d ON f.date_id = d.date_id JOIN dim_region r ON f.region_id = r.region_id WHERE r.region_name = '华南' AND d.year = 2025 AND d.month = 3 AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004')"
+  },
+  {
+    "id": "q15",
+    "category": "category_filter",
+    "question": "统计2025年第一季度当前可访问区域购买手机数码类商品的订单数量",
+    "order_sensitive": false,
+    "gold_sql": "SELECT COUNT(f.order_id) AS order_count FROM fact_order f JOIN dim_product p ON f.product_id = p.product_id JOIN dim_date d ON f.date_id = d.date_id WHERE p.category = '手机数码' AND d.year = 2025 AND d.quarter = 'Q1' AND f.region_id IN ('R001', 'R004')"
+  },
+  {
+    "id": "q16",
+    "category": "group_by_category",
+    "question": "按商品品类统计2025年第一季度当前可访问区域的销售件数",
+    "order_sensitive": false,
+    "gold_sql": "SELECT p.category AS category, SUM(f.order_quantity) AS total_quantity FROM fact_order f JOIN dim_product p ON f.product_id = p.product_id JOIN dim_date d ON f.date_id = d.date_id WHERE d.year = 2025 AND d.quarter = 'Q1' AND f.region_id IN ('R001', 'R004') GROUP BY p.category"
+  },
+  {
+    "id": "q17",
+    "category": "condition_count",
+    "question": "统计2025年1月华北地区购买数量不少于10件的订单数量",
+    "order_sensitive": false,
+    "gold_sql": "SELECT COUNT(f.order_id) AS order_count FROM fact_order f JOIN dim_date d ON f.date_id = d.date_id JOIN dim_region r ON f.region_id = r.region_id WHERE r.region_name = '华北' AND d.year = 2025 AND d.month = 1 AND f.order_quantity >= 10 AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004')"
+  },
+  {
+    "id": "q18",
+    "category": "condition_count",
+    "question": "统计2025年2月华南地区销售额超过1000元的订单数量",
+    "order_sensitive": false,
+    "gold_sql": "SELECT COUNT(f.order_id) AS order_count FROM fact_order f JOIN dim_date d ON f.date_id = d.date_id JOIN dim_region r ON f.region_id = r.region_id WHERE r.region_name = '华南' AND d.year = 2025 AND d.month = 2 AND f.order_amount > 1000 AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004')"
+  },
+  {
+    "id": "q19",
+    "category": "top_province",
+    "question": "查询2025年第一季度订单数量最多的省份",
+    "order_sensitive": true,
+    "gold_sql": "SELECT r.province AS province, COUNT(f.order_id) AS order_count FROM fact_order f JOIN dim_region r ON f.region_id = r.region_id JOIN dim_date d ON f.date_id = d.date_id WHERE d.year = 2025 AND d.quarter = 'Q1' AND f.region_id IN ('R001', 'R004') AND r.region_id IN ('R001', 'R004') GROUP BY r.province ORDER BY COUNT(f.order_id) DESC LIMIT 1"
+  },
+  {
+    "id": "q20",
+    "category": "group_by_time",
+    "question": "按月份统计2025年第一季度当前可访问区域的销售额和订单数量",
+    "order_sensitive": true,
+    "gold_sql": "SELECT d.month AS month, SUM(f.order_amount) AS total_sales, COUNT(f.order_id) AS order_count FROM fact_order f JOIN dim_date d ON f.date_id = d.date_id WHERE d.year = 2025 AND d.quarter = 'Q1' AND f.region_id IN ('R001', 'R004') GROUP BY d.month ORDER BY d.month"
+  }
+]
